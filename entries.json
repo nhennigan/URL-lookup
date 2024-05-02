@@ -1,0 +1,18 @@
+[
+    {
+        "URL": "qrs.com",
+        "Malware": "no"
+    },
+    {
+        "URL": "tuv.com",
+        "Malware": "no"
+    },
+    {
+        "URL": "wxy.com",
+        "Malware": "yes"
+    },
+    {
+        "URL": "123.com",
+        "Malware": "no"
+    }
+]

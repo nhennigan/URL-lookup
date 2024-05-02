@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -30,6 +31,8 @@ func createDb() int64 {
 		log.Fatal(err)
 	}
 
+	defer db.Close()
+
 	db.SetMaxOpenConns(20)
 	db.SetMaxIdleConns(20)
 	db.SetConnMaxLifetime(time.Minute * 5)
@@ -51,11 +54,10 @@ func createDb() int64 {
 	}
 	return no_rows
 
-	// defer db.Close()
 }
 
 // load data into database
-func loadData() int64 {
+func initializeDb() int64 {
 	db, err := sql.Open("mysql", dsn("urls"))
 	if err != nil {
 		log.Fatal(err)
@@ -72,7 +74,7 @@ func loadData() int64 {
 	}
 
 	// context, cancelfunc = context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancelfunc()
+	//defer cancelfunc()
 
 	res, err := db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('abc.com','yes'),('def.com','no'),('ghi.com','no'),('jkl.com','yes');")
 	if err != nil {
@@ -93,6 +95,8 @@ func malwareCheck(url string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
+
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
 
@@ -117,4 +121,58 @@ func dsn(dbName string) string {
 	var username = os.Getenv("username")
 	var hostname = os.Getenv("hostname")
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s", username, password, hostname, dbName)
+}
+
+type inputData struct {
+	URL     string `json:"URL"`
+	Malware string `json:"Malware"`
+}
+
+func readNewData() []inputData {
+	file, err := os.ReadFile("entries.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var data []inputData
+	err = json.Unmarshal(file, &data)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	return data
+}
+
+// add new entry(s) to the database based on read in data
+func addNewEntry(entries []inputData) {
+	db, err := sql.Open("mysql", dsn("urls"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+
+	for _, val := range entries {
+		_, err := db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('"+val.URL+"','"+val.Malware+"');")
+		if err != nil {
+			log.Printf("Error occurred when populating DB\n %s", err)
+		}
+	}
+}
+
+// alter existing db entry on malware yes or no status
+func setMalwareSafe(url string, safe string) {
+	db, err := sql.Open("mysql", dsn("urls"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+
+	_, err = db.ExecContext(context, "update MalwareCheck set malware='"+safe+"' where url='"+url+"';")
+	if err != nil {
+		log.Fatal(err)
+	}
 }

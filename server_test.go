@@ -31,7 +31,7 @@ func TestGETPage(t *testing.T) {
 
 		Server(response, request)
 		got := response.Body.String()
-		want := "URL helloworld URL not found in database"
+		want := "URL helloworld \nURL not found in database"
 
 		assertUrlResponse(t, got, want)
 	})
@@ -72,7 +72,7 @@ func TestGETPage(t *testing.T) {
 
 		Server(response, request)
 		got := response.Body.String()
-		want := "URL abc.com Safe yes"
+		want := "URL abc.com \nSafe yes"
 
 		assertUrlResponse(t, got, want)
 	})

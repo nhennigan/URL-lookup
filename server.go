@@ -40,8 +40,9 @@ func Server(w http.ResponseWriter, r *http.Request) {
 	res := malwareCheck(url)
 
 	if res == "" {
-		fmt.Fprintf(w, " URL not found in database")
+		fmt.Fprintf(w, " \nURL not found in database")
 	} else {
-		fmt.Fprintf(w, " Safe "+res)
+		fmt.Fprintf(w, " \nSafe "+res)
 	}
+
 }
