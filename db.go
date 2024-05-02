@@ -30,6 +30,10 @@ func createDb() int64 {
 		log.Fatal(err)
 	}
 
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(20)
+	db.SetConnMaxLifetime(time.Minute * 5)
+
 	//create context for timeout
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
