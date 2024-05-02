@@ -84,6 +84,30 @@ func loadData() int64 {
 
 }
 
+func malwareCheck(url string) string {
+	db, err := sql.Open("mysql", dsn("urls"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelfunc()
+
+	var mal string
+	row, err := db.QueryContext(context, "select malware from MalwareCheck where url='"+url+"';")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for row.Next() {
+		err = row.Scan(&mal)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	return mal
+
+}
+
 func dsn(dbName string) string {
 	var password = os.Getenv("password")
 	var username = os.Getenv("username")

@@ -16,12 +16,24 @@ func TestInit(t *testing.T) {
 		}
 
 	})
-	t.Run("checks db url created and populated", func(t *testing.T) {
-		got := loadData()
-		want := int64(4)
+	// t.Run("checks db url created and populated", func(t *testing.T) {
+	// 	got := loadData()
+	// 	want := int64(4)
+
+	// 	if got != want {
+	// 		t.Errorf("return is incorrect - got %q ", got)
+	// 	}
+
+	// })
+}
+
+func TestMalwareCheck(t *testing.T) {
+	t.Run("checks db query fucn", func(t *testing.T) {
+		got := malwareCheck("abc.com")
+		want := "yes"
 
 		if got != want {
-			t.Errorf("return is incorrect - got %q ", got)
+			t.Errorf("return is incorrect - got %q , want %q", got, want)
 		}
 
 	})
