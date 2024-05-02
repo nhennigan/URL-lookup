@@ -7,17 +7,26 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+	"strings"
 )
 
-// will need a HTTP handler
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Check URL")
+// create struct to assign malware true/false to url
+type url struct {
+	url     string
+	malware bool
 }
 
-// will server some sort of webpage
-func main() {
-	http.HandleFunc("/v1/urlinfo/", handler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+// will need a HTTP handler
+func Server(w http.ResponseWriter, r *http.Request) {
+	//trim URL for database lookup
+	url := strings.TrimPrefix(r.URL.Path, "/v1/urlinfo/")
+	fmt.Fprintf(w, "URL "+url)
+	//check database
+	//return true/false
 }
+
+//lookup database
+//func lookup(url string)bool{
+//
+// }
