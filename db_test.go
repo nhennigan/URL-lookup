@@ -52,9 +52,9 @@ func TestMalwareCheck(t *testing.T) {
 	}
 }
 
-func TestSetMalwareSafe(t *testing.T) {
+func TestSetMalwareState(t *testing.T) {
 	t.Run("checks db update func", func(t *testing.T) {
-		setMalwareSafe("def.com", "yes")
+		setMalwareState("def.com", "yes")
 		got, _ := malwareCheck("def.com")
 		want := "yes"
 
@@ -83,25 +83,40 @@ func TestReadNewData(t *testing.T) {
 	})
 }
 
-func TestAddNewEntry(t *testing.T) {
-	t.Run("checks new entries added to db correctly", func(t *testing.T) {
-		input := []inputData{
+var testAddEntry = []struct {
+	name  string
+	input []inputData
+}{
+	{"checks new entries added to db correctly",
+		[]inputData{
+			{"qrs.com", "no"},
+			{"tuv.com", "yes"},
+			{"wxy.com", "yes"},
+			{"123.com", "no"}},
+	},
+	{"checks updated entries",
+		[]inputData{
 			{"qrs.com", "no"},
 			{"tuv.com", "no"},
 			{"wxy.com", "yes"},
-			{"123.com", "no"}}
+			{"123.com", "no"},
+			{"456.com", "yes"}},
+	},
+}
 
-		addNewEntry(input)
-
-		for i, _ := range input {
-			got, _ := malwareCheck(input[i].URL)
-			want := input[i].Malware
-			if got != input[i].Malware {
-				t.Errorf("return is incorrect - got %q , want %q", got, want)
+func TestAddNewEntry(t *testing.T) {
+	for _, tt := range testAddEntry {
+		t.Run(tt.name, func(t *testing.T) {
+			for i, _ := range tt.input {
+				addNewEntry(tt.input)
+				got, _ := malwareCheck(tt.input[i].URL)
+				want := tt.input[i].Malware
+				if got != tt.input[i].Malware {
+					t.Errorf("return is incorrect - got %q , want %q for entry %s", got, want, tt.input[i].URL)
+				}
 			}
-		}
-
-	})
+		})
+	}
 }
 
 // func TestSampleData(t *testing.T) {

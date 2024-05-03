@@ -159,19 +159,25 @@ func addNewEntry(entries []inputData) {
 	defer cancelfunc()
 
 	for _, val := range entries {
-		// out, _ := malwareCheck(val.URL)
-		// if out != ""{
-		// 	if
-		// }
-		_, err := db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('"+val.URL+"','"+val.Malware+"');")
-		if err != nil {
-			log.Printf("Error occurred when populating DB\n %s", err)
+		//check if exists in db already
+		out, _ := malwareCheck(val.URL)
+		if out != "" {
+			//if exists but malware state has changed - update
+			if out != val.Malware {
+				setMalwareState(val.URL, val.Malware)
+			}
+			//otherwise add to db
+		} else {
+			_, err := db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('"+val.URL+"','"+val.Malware+"');")
+			if err != nil {
+				log.Printf("Error occurred when populating DB\n %s", err)
+			}
 		}
 	}
 }
 
 // alter existing db entry on malware yes or no status
-func setMalwareSafe(url string, safe string) {
+func setMalwareState(url string, safe string) {
 	db := openDb()
 	defer db.Close()
 
