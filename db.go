@@ -34,6 +34,7 @@ func createDb() int64 {
 
 	defer db.Close()
 
+	//set db limits
 	db.SetMaxOpenConns(20)
 	db.SetMaxIdleConns(20)
 	db.SetConnMaxLifetime(time.Minute * 5)
@@ -57,8 +58,8 @@ func createDb() int64 {
 
 }
 
-// load data into database
-func initializeDb() int64 {
+// initialize datbase and load preliminary data
+func initializeDb() {
 	db := openDb()
 	defer db.Close()
 
@@ -71,21 +72,10 @@ func initializeDb() int64 {
 		log.Printf("Error occurred when creating table\n %s", err)
 	}
 
-	// context, cancelfunc = context.WithTimeout(context.Background(), 5*time.Second)
-	//defer cancelfunc()
-
-	res, err := db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('abc.com','yes'),('def.com','no'),('ghi.com','no'),('jkl.com','yes');")
+	_, err = db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('abc.com','yes'),('def.com','no'),('ghi.com','no'),('jkl.com','yes');")
 	if err != nil {
 		log.Printf("Error occurred when populating DB\n %s", err)
 	}
-
-	//return result of database population
-	no_rows, err := res.RowsAffected()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return no_rows
-
 }
 
 func openDb() *sql.DB {
@@ -96,23 +86,28 @@ func openDb() *sql.DB {
 	return db
 }
 
+// query db to get malware status (safe - yes or no) given url
 func malwareCheck(url string) (string, error) {
 
+	//check if no url provided
 	if url == "" {
 		return "", errors.New("empty url")
 	}
+
 	db := openDb()
 	defer db.Close()
 
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
 
+	//quesy db
 	var mal string
 	row, err := db.QueryContext(context, "select malware from MalwareCheck where url='"+url+"';")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//format response
 	for row.Next() {
 		err = row.Scan(&mal)
 	}
@@ -123,6 +118,7 @@ func malwareCheck(url string) (string, error) {
 
 }
 
+// data source name - format needed to access mysql server
 func dsn(dbName string) string {
 	var password = os.Getenv("password")
 	var username = os.Getenv("username")
@@ -135,6 +131,7 @@ type inputData struct {
 	Malware string `json:"Malware"`
 }
 
+// read from entries.json and create slice of struct inputData
 func readNewData() []inputData {
 	file, err := os.ReadFile("entries.json")
 	if err != nil {
@@ -176,7 +173,7 @@ func addNewEntry(entries []inputData) {
 	}
 }
 
-// alter existing db entry on malware yes or no status
+// alter existing db entry on malware yes or no state
 func setMalwareState(url string, safe string) {
 	db := openDb()
 	defer db.Close()

@@ -5,7 +5,7 @@ Coding assignment for interview. Implement a URL lookup that will block if malwa
 ## Contents
 
 * [System Requirements](#system-requirements)
-* [Project Diagram](#project-diagram)
+* [Project Design](#project-design)
 * [System Setup](#system-setup)
 * [Task Questions](#task-questions)
 * [Testing](#testing)
@@ -17,9 +17,11 @@ Coding assignment for interview. Implement a URL lookup that will block if malwa
 * SQL server running locally
 * I am using on a Windows dev env - this code should be compatible across platforms but the execution of the server file may be different depeding on your operating system
 
-## Project Diagram
+## Project Design
 
 ![image](docs/logicFlow.png "logic")
+
+For this API I used golangs built in library net/http to serve up a simple web service that implments a REST API. I do not have explicit authorization enabled for this service so I disabled all other HTTP request methods other than GET and limited the number of requests per second to reduce risk. If this were to be implemented on a production level there would need to be an api access token implemented. I used a MySQL database for the URL storage.
 
 ## System Setup
 
@@ -61,8 +63,9 @@ This will show the output of the server. To input values to check the url databa
 127.0.0.1:8080/v1/urlinfo/wx7.com
 ```
 
-![image](docs/Capture1.png "output")
-![image](docs/Capture2.png "output")
+![image](docs/Capture1.PNG "output")
+
+![image](docs/Capture2.PNG "output")
 
 The service will check the database if that URL entry exists and if it has malware present.
 

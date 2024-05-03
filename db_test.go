@@ -16,15 +16,18 @@ func TestInit(t *testing.T) {
 		}
 
 	})
-	// t.Run("checks db url created and populated", func(t *testing.T) {
-	// 	got := initializeData()
-	// 	want := int64(4)
+}
 
-	// 	if got != want {
-	// 		t.Errorf("return is incorrect - got %q ", got)
-	// 	}
+func TestSampleData(t *testing.T) {
+	t.Run("checks db is populated", func(t *testing.T) {
+		initializeDb()
+		got, err := malwareCheck("abc.com")
+		want := "yes"
 
-	// })
+		if got != want || err != nil {
+			t.Errorf("return is incorrect - got %q , want %q", got, want)
+		}
+	})
 }
 
 var malwareCheckTests = []struct {
@@ -118,24 +121,3 @@ func TestAddNewEntry(t *testing.T) {
 		})
 	}
 }
-
-// func TestSampleData(t *testing.T) {
-// 	t.Run("checks db is populated", func(t *testing.T) {
-// 		got := InitializeData()
-// 		want := int64(1)
-
-// 		if got != want {
-// 			t.Errorf("return is incorrect - got %q , want %q", got, want)
-// 		}
-
-// 	})
-// 	// t.Run("checks db url opens", func(t *testing.T) {
-// 	// 	got := loadData()
-// 	// 	// want := nil
-
-// 	// 	if got != nil {
-// 	// 		t.Errorf("return is incorrect - got %q ", got)
-// 	// 	}
-
-// 	// })
-// }

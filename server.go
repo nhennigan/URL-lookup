@@ -1,10 +1,5 @@
 package main
 
-//will need a HTTP handler
-// type Handler interface {
-// 	ServeHTTP(ResponseWriter, *Request)
-// }
-
 import (
 	"fmt"
 	"net/http"
@@ -15,11 +10,6 @@ import (
 )
 
 var limiter = rate.NewLimiter(1, 15)
-
-// type safeFileAccess struct{
-// 	mu sync.Mutex
-
-// }
 
 // HTTP handler
 func Server(w http.ResponseWriter, r *http.Request) {
@@ -67,8 +57,4 @@ func Server(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-
-	// time.Sleep(5 * time.Minute)
-	// ticker.Stop()
-	// done <- true
 }

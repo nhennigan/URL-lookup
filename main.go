@@ -10,8 +10,7 @@ import (
 
 func main() {
 	createDb()
-	//uncomment when check inserted for duplicate entries
-	//initializeDb()
+	initializeDb()
 
 	handler := http.HandlerFunc(Server)
 	log.Fatal(http.ListenAndServe(":8080", handler))
