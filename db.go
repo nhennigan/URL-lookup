@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -58,17 +59,14 @@ func createDb() int64 {
 
 // load data into database
 func initializeDb() int64 {
-	db, err := sql.Open("mysql", dsn("urls"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	// val := db.Ping()
-	// return val
+	db := openDb()
+	defer db.Close()
+
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
 
 	//create database
-	_, err = db.ExecContext(context, "CREATE TABLE IF NOT EXISTS MalwareCheck(url varchar(255) NOT NULL, malware varchar(255) NOT NULL, PRIMARY KEY (url));")
+	_, err := db.ExecContext(context, "CREATE TABLE IF NOT EXISTS MalwareCheck(url varchar(255) NOT NULL, malware varchar(255) NOT NULL, PRIMARY KEY (url));")
 	if err != nil {
 		log.Printf("Error occurred when creating table\n %s", err)
 	}
@@ -90,11 +88,20 @@ func initializeDb() int64 {
 
 }
 
-func malwareCheck(url string) string {
+func openDb() *sql.DB {
 	db, err := sql.Open("mysql", dsn("urls"))
 	if err != nil {
 		log.Fatal(err)
 	}
+	return db
+}
+
+func malwareCheck(url string) (string, error) {
+
+	if url == "" {
+		return "", errors.New("empty url")
+	}
+	db := openDb()
 	defer db.Close()
 
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
@@ -112,7 +119,7 @@ func malwareCheck(url string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return mal
+	return mal, nil
 
 }
 
@@ -145,14 +152,17 @@ func readNewData() []inputData {
 
 // add new entry(s) to the database based on read in data
 func addNewEntry(entries []inputData) {
-	db, err := sql.Open("mysql", dsn("urls"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	db := openDb()
+	defer db.Close()
+
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
 
 	for _, val := range entries {
+		// out, _ := malwareCheck(val.URL)
+		// if out != ""{
+		// 	if
+		// }
 		_, err := db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('"+val.URL+"','"+val.Malware+"');")
 		if err != nil {
 			log.Printf("Error occurred when populating DB\n %s", err)
@@ -162,16 +172,13 @@ func addNewEntry(entries []inputData) {
 
 // alter existing db entry on malware yes or no status
 func setMalwareSafe(url string, safe string) {
-	db, err := sql.Open("mysql", dsn("urls"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	db := openDb()
 	defer db.Close()
 
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
 
-	_, err = db.ExecContext(context, "update MalwareCheck set malware='"+safe+"' where url='"+url+"';")
+	_, err := db.ExecContext(context, "update MalwareCheck set malware='"+safe+"' where url='"+url+"';")
 	if err != nil {
 		log.Fatal(err)
 	}

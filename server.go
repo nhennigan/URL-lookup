@@ -13,12 +13,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// create struct to assign malware true/false to url
-// type url struct{
-// 	url     string
-// 	malware bool
-// }
-
 var limiter = rate.NewLimiter(1, 15)
 
 // will need a HTTP handler
@@ -37,12 +31,24 @@ func Server(w http.ResponseWriter, r *http.Request) {
 	url := strings.TrimPrefix(r.URL.Path, "/v1/urlinfo/")
 	fmt.Fprintf(w, "URL "+url)
 	//check database
-	res := malwareCheck(url)
+	res, err := malwareCheck(url)
+	if err != nil {
+		fmt.Fprintf(w, "There is some issue with the database")
+	}
 
 	if res == "" {
 		fmt.Fprintf(w, " \nURL not found in database")
 	} else {
 		fmt.Fprintf(w, " \nSafe "+res)
 	}
+
+	// duration := 1 * time.Minute
+	// ticker := time.NewTicker(duration)
+
+	// for range ticker.C {
+	// 	fmt.Printf("ticker happening")
+	// 	entries := readNewData()
+	// 	addNewEntry(entries)
+	// }
 
 }

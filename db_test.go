@@ -27,21 +27,35 @@ func TestInit(t *testing.T) {
 	// })
 }
 
-func TestMalwareCheck(t *testing.T) {
-	t.Run("checks db query func", func(t *testing.T) {
-		got := malwareCheck("abc.com")
-		want := "yes"
-
-		if got != want {
-			t.Errorf("return is incorrect - got %q , want %q", got, want)
-		}
-
-	})
+var malwareCheckTests = []struct {
+	name      string
+	input     string
+	output    string
+	wantError bool
+}{
+	{"check db quey valid input", "abc.com", "yes", false},
+	{"check db query empty input", "", "", true},
+	{"check db query invalid input", "678.com", "", false},
 }
+
+func TestMalwareCheck(t *testing.T) {
+	for _, tt := range malwareCheckTests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := malwareCheck(tt.input)
+			if got != tt.output {
+				t.Errorf("db returned val is incorrect - got %q , want %q", got, tt.output)
+			}
+			if err == nil && tt.wantError == true {
+				t.Errorf("did not return error as expected - got %q ", got)
+			}
+		})
+	}
+}
+
 func TestSetMalwareSafe(t *testing.T) {
 	t.Run("checks db update func", func(t *testing.T) {
 		setMalwareSafe("def.com", "yes")
-		got := malwareCheck("def.com")
+		got, _ := malwareCheck("def.com")
 		want := "yes"
 
 		if got != want {
@@ -76,11 +90,11 @@ func TestAddNewEntry(t *testing.T) {
 			{"tuv.com", "no"},
 			{"wxy.com", "yes"},
 			{"123.com", "no"}}
+
 		addNewEntry(input)
-		// got := readNewData()
 
 		for i, _ := range input {
-			got := malwareCheck(input[i].URL)
+			got, _ := malwareCheck(input[i].URL)
 			want := input[i].Malware
 			if got != input[i].Malware {
 				t.Errorf("return is incorrect - got %q , want %q", got, want)
@@ -92,7 +106,7 @@ func TestAddNewEntry(t *testing.T) {
 
 // func TestSampleData(t *testing.T) {
 // 	t.Run("checks db is populated", func(t *testing.T) {
-// 		got := loadData()
+// 		got := InitializeData()
 // 		want := int64(1)
 
 // 		if got != want {

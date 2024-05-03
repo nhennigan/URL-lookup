@@ -7,81 +7,45 @@ import (
 	"testing"
 )
 
+var reader = strings.NewReader("hi")
+
+var serverTests = []struct {
+	name     string
+	inMethod string
+	inUrl    string
+	inReader *strings.Reader
+	out      string
+}{
+	{"Check if URL is not DB", "GET", "/v1/urlinfo/helloworld", nil, "URL helloworld \nURL not found in database"},
+	{"Check if URL is in DB", "GET", "/v1/urlinfo/abc.com", nil, "URL abc.com \nSafe yes"},
+	{"Check if not GET method request", "POST", "/v1/urlinfo/abc.com", reader, "Only GET requests are allowed!\n"},
+}
+
 func TestGETPage(t *testing.T) {
-	t.Run("check only GET method allowed", func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodPost, "/v1/urlinfo/helloworld", strings.NewReader("hi"))
-		if err != nil {
-			t.Errorf("could not create http request")
-		}
-		response := httptest.NewRecorder()
 
-		Server(response, request)
-		got := response.Body.String()
-		want := "Only GET requests are allowed!\n"
+	for _, tt := range serverTests {
+		t.Run(tt.name, func(t *testing.T) {
+			request, err := http.NewRequest(tt.inMethod, tt.inUrl, nil)
+			checkHttpErr(err, t)
 
-		assertUrlResponse(t, got, want)
-	})
+			response := httptest.NewRecorder()
 
-	t.Run("check URL not found", func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodGet, "/v1/urlinfo/helloworld", nil)
-		if err != nil {
-			t.Errorf("could not create http request")
-		}
-		response := httptest.NewRecorder()
-
-		Server(response, request)
-		got := response.Body.String()
-		want := "URL helloworld \nURL not found in database"
-
-		assertUrlResponse(t, got, want)
-	})
-	// t.Run("returns check url helloworld", func(t *testing.T) {
-	// 	request, err := http.NewRequest(http.MethodGet, "/v1/urlinfo/helloworld", nil)
-	// 	if err != nil {
-	// 		t.Errorf("could not create http request")
-	// 	}
-	// 	response := httptest.NewRecorder()
-
-	// 	Server(response, request)
-	// 	got := response.Body.String()
-	// 	want := "URL helloworld Safe "
-
-	// 	assertUrlResponse(t, got, want)
-	// })
-
-	// t.Run("returns check url abcd", func(t *testing.T) {
-	// 	request, err := http.NewRequest(http.MethodGet, "/v1/urlinfo/abcd", nil)
-	// 	if err != nil {
-	// 		t.Errorf("could not create http request")
-	// 	}
-	// 	response := httptest.NewRecorder()
-
-	// 	Server(response, request)
-	// 	got := response.Body.String()
-	// 	want := "URL abcd Safe "
-
-	// 	assertUrlResponse(t, got, want)
-	// })
-
-	t.Run("returns check url abc.com and safe or not", func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodGet, "/v1/urlinfo/abc.com", nil)
-		if err != nil {
-			t.Errorf("could not create http request")
-		}
-		response := httptest.NewRecorder()
-
-		Server(response, request)
-		got := response.Body.String()
-		want := "URL abc.com \nSafe yes"
-
-		assertUrlResponse(t, got, want)
-	})
-
+			Server(response, request)
+			got := response.Body.String()
+			assertUrlResponse(t, got, tt.out)
+		})
+	}
 }
 
 func assertUrlResponse(t testing.TB, got, want string) {
 	t.Helper()
 	if got != want {
 		t.Errorf("URL is incorrect - got %q , want %q", got, want)
+	}
+}
+
+func checkHttpErr(err error, t *testing.T) {
+	if err != nil {
+		t.Errorf("could not create http request")
 	}
 }
