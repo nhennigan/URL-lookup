@@ -17,7 +17,7 @@ var serverTests = []struct {
 	out      string
 }{
 	{"Check if URL is not DB", "GET", "/v1/urlinfo/helloworld", nil, "URL helloworld \nURL not found in database"},
-	{"Check if URL is in DB", "GET", "/v1/urlinfo/abc.com", nil, "URL abc.com \nSafe yes"},
+	{"Check if URL is in DB", "GET", "/v1/urlinfo/abc.com", nil, "URL abc.com \nMalware present yes"},
 	{"Check if not GET method request", "POST", "/v1/urlinfo/abc.com", reader, "Only GET requests are allowed!\n"},
 }
 

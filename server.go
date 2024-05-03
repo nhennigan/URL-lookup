@@ -16,31 +16,39 @@ import (
 
 var limiter = rate.NewLimiter(1, 15)
 
-// will need a HTTP handler
+// type safeFileAccess struct{
+// 	mu sync.Mutex
+
+// }
+
+// HTTP handler
 func Server(w http.ResponseWriter, r *http.Request) {
-	//trim URL for database lookup
+	// if HTTP method is not GET, do not allow the request
 	if r.Method != "GET" {
 		http.Error(w, "Only GET requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
 
+	//only allow a limited number of requests per second
 	if !limiter.Allow() {
 		http.Error(w, "Too many requests", http.StatusTooManyRequests)
 		return
 	}
 
+	//trim URL for database lookup
 	url := strings.TrimPrefix(r.URL.Path, "/v1/urlinfo/")
 	fmt.Fprintf(w, "URL "+url)
-	//check database
+	//check database for malware
 	res, err := malwareCheck(url)
 	if err != nil {
 		fmt.Fprintf(w, "There is some issue with the database")
 	}
 
+	//print result to screen
 	if res == "" {
 		fmt.Fprintf(w, " \nURL not found in database")
 	} else {
-		fmt.Fprintf(w, " \nSafe "+res)
+		fmt.Fprintf(w, " \nMalware present "+res)
 	}
 
 	//read entries.json file every 10 mins
@@ -63,10 +71,4 @@ func Server(w http.ResponseWriter, r *http.Request) {
 	// time.Sleep(5 * time.Minute)
 	// ticker.Stop()
 	// done <- true
-	// for range ticker.C {
-	// 	fmt.Printf("ticker happening")
-	// 	entries := readNewData()
-	// 	addNewEntry(entries)
-	// }
-
 }
