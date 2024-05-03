@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -42,9 +43,26 @@ func Server(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, " \nSafe "+res)
 	}
 
-	// duration := 1 * time.Minute
-	// ticker := time.NewTicker(duration)
+	//read entries.json file every 10 mins
+	duration := 10 * time.Minute
+	ticker := time.NewTicker(duration)
+	done := make(chan bool)
 
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				entries := readNewData()
+				addNewEntry(entries)
+			}
+		}
+	}()
+
+	// time.Sleep(5 * time.Minute)
+	// ticker.Stop()
+	// done <- true
 	// for range ticker.C {
 	// 	fmt.Printf("ticker happening")
 	// 	entries := readNewData()
