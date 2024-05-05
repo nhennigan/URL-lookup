@@ -6,10 +6,17 @@ import (
 	"strings"
 	"time"
 
+	"encoding/json"
+
 	"golang.org/x/time/rate"
 )
 
 var limiter = rate.NewLimiter(1, 15)
+
+type URL struct {
+	URL     string `json:"URL"`
+	Malware string `json:"Malware"`
+}
 
 // HTTP handler
 func Server(w http.ResponseWriter, r *http.Request) {
@@ -25,21 +32,25 @@ func Server(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	//trim URL for database lookup
 	url := strings.TrimPrefix(r.URL.Path, "/v1/urlinfo/")
-	fmt.Fprintf(w, "URL "+url)
 	//check database for malware
 	res, err := malwareCheck(url)
 	if err != nil {
 		fmt.Fprintf(w, "There is some issue with the database")
 	}
 
-	//print result to screen
+	var urlResp URL
+	urlResp.URL = url
+	//return json response
 	if res == "" {
-		fmt.Fprintf(w, " \nURL not found in database")
+		urlResp.Malware = "unknown"
 	} else {
-		fmt.Fprintf(w, " \nMalware present "+res)
+		urlResp.Malware = res
 	}
+
+	json.NewEncoder(w).Encode(urlResp)
 
 	//read entries.json file every 10 mins
 	duration := 10 * time.Minute
