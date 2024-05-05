@@ -120,8 +120,8 @@ func malwareCheck(url string) (string, error) {
 
 // data source name - format needed to access mysql server
 func dsn(dbName string) string {
-	var password = os.Getenv("password")
-	var username = os.Getenv("username")
+	var password = os.Getenv("dbPassword")
+	var username = os.Getenv("dbUsername")
 	var hostname = os.Getenv("hostname")
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s", username, password, hostname, dbName)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -28,6 +29,7 @@ func TestGETPage(t *testing.T) {
 			request, err := http.NewRequest(tt.inMethod, tt.inUrl, nil)
 			checkHttpErr(err, t)
 
+			request.SetBasicAuth(os.Getenv("appUsername"), os.Getenv("appPassword"))
 			response := httptest.NewRecorder()
 
 			Server(response, request)
