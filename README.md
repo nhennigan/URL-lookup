@@ -21,7 +21,26 @@ Coding assignment for interview. Implement a URL lookup that will block if malwa
 
 ![image](docs/logicFlow.png "logic")
 
-For this API I used golangs built in library net/http to serve up a simple web service that implments a REST API. I do not have explicit authorization enabled for this service so I disabled all other HTTP request methods other than GET and limited the number of requests per second to reduce risk. If this were to be implemented on a production level there would need to be an api access token implemented. I used a MySQL database for the URL storage.
+For this API I used golang's built in library net/http to serve up a simple web service that implments a REST API. I implemented a very simple authorization for this service. The password and user must be passed to the server in the GET HTTP packet. I disabled all other HTTP request methods other than GET and limited the number of requests per second to reduce risk. If this were to be implemented on a production level there would need to be an api access token implemented. I used a MySQL database for the URL storage.
+
+The API endpoints are
+/v1/urlinfo/
+
+* GET - Get info on URL whether it contains malware or not
+
+    /v1/urlinfo/{url}
+
+    How to query this API
+
+    ```sh
+    http://user:password@localhost:8080/v1/urlinfo/{url to query}
+    ```
+
+    Returned value is a JSON object that has information on whether malware is present or not (yes/no) against the requested URL. If the URL is not found in the database, the malware status is returned as unknown.
+
+    ```json
+    {"URL":"abc","Malware":"unknown"}
+    ```
 
 ## System Setup
 
@@ -31,12 +50,15 @@ Clone the repo
 git clone https://github.com/nhennigan/URL-lookup.git
 ```
 
-Edit the credentials.env file to add your own MySQL server details. The username and hostname are the default settings when setting up a MySQL server.
+Edit the credentials.env file to add your own MySQL server details and the user you want for the website. The db username and hostname are the default settings when setting up a MySQL server.
 
 ```sh
-password=XXXXXXXX
-username=root
+dbPassword=XXXXXXXX
+dbUsername=root
 hostname =127.0.0.1:3306
+
+appUsername=XXXXXXXXXXX
+appPassword=XXXXXXXXXXX
 ```
 
 Build the executable
@@ -51,16 +73,20 @@ This will create a server.exe file in your local repo. Run this to start the ser
 .\server.exe
 ```
 
-If you open a new tab on your browser and enter:
+If you open a new tab on your browser and enter the following:
 
 ```sh
-127.0.0.1:8080/v1/urlinfo/
+http://admin:pass@127.0.0.1:8080/v1/urlinfo/
 ```
 
-This will show the output of the server. To input values to check the url database, add the url you want to search to the search bar. For example:
+This will show the output of the server. Admin and pass are the sample username and password I have set in the credentials file. You may be prompted to input the username and password for the web service by your browser. If this is successful, you can drop the admin:pass@ from the http request.
+
+![image](docs/login.PNG "login")
+
+To input values to check the url database, add the url you want to search to the search bar. For example:
 
 ```sh
-127.0.0.1:8080/v1/urlinfo/wx7.com
+127.0.0.1:8080/v1/urlinfo/wxy.com
 ```
 
 ![image](docs/Capture1.PNG "output")
@@ -73,9 +99,9 @@ The service will check the database if that URL entry exists and if it has malwa
 
 ### What are some strategies you might use to update the service with new URLs? Updates may be as many as 5000 URLs a day with updates arriving every 10 minutes
 
-For this system I only created a sample database using MySQL as that is the database that I have already configured on my development environment. This database is also very simple with only one table with two fields. MySQL is known to be slower in look ups than a NoSQL server, especially as the data grows in size and the type of data being store is not uniform. As the databases scale, it would make sense to move to NoSQL.
+For this system I only created a sample database using MySQL as that is the database that I have already configured on my development environment. This database is also very simple with only one table with two fields. MySQL is known to be slower in look ups than a NoSQL server, especially as the data grows in size and the type of data being stored is not uniform. As the databases scale, it would make sense to move to NoSQL.
 
-I have implemented a simple ticker [here](server.go#L46) that will read the entries.json file and add new URLs to the database or update the exsisting URL malware status if necessary. The thought process here would be that the entries.json file would be controlled by whoever is providing the info on whether a URL is safe or not for our DB. We could extend the server functionality to check for new json files to read in from a certain location. As the ticker is using a go routine, this would have to made safe with something like a sync lock.
+I have implemented a simple ticker [here](server.go#L73) that will read the entries.json file and add new URLs to the database or update the exsisting URL malware status if necessary. The thought process here would be that the entries.json file would be controlled by whoever is providing the info on whether a URL is safe or not for our DB. We could extend the server functionality to check for new json files to read in from a certain location. As the ticker is using a go routine, this would have to made safe with something like a sync lock.
 
 ### The size of the URL list could grow infinitely, how might you scale this beyond the memory capacity of the system? Bonus if you implement this
 
@@ -83,7 +109,7 @@ Vertically scaling the location where the database is held will allow it to scal
 
 ### The number of requests may exceed the capacity of this system, how might you solve that? Bonus if you implement this
 
-At the moment I have set the limit of requests per second to 15 [here](server.go#L12) as a low threshold for testing on my development environment. This could be much higher on more powerful servers. This would be vertically scaling the system by adding more resoures. I also set db connection limits [here](db.go#L37). Again, scaling vertically with a more powerful server would allow you to drastically increase these limits.
+At the moment I have set the limit of requests per second to 15 [here](server.go#L15) as a low threshold for testing on my development environment. This could be much higher on more powerful servers. This would be vertically scaling the system by adding more resoures. I also set db connection limits [here](db.go#L38). Again, scaling vertically with a more powerful server would allow you to drastically increase these limits.
 
 You coud also horizontially scale the process in the form of containers/pods that can be duplicated. A service IP would provide the one endpoint to the proxy HTML server and the service will provide by default a round robin distribution of traffic accross however many instances of the url lookup you want. There would have to be one underlying database that all url lookup containers/pods can use - this would also have to be go routine safe. This could be done by extracting the ticker (i.e. the database updater) to a seperate service that is the only one with write access to the database. A simplified diagram of this setup using docker compose would look like:
 

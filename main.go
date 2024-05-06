@@ -13,7 +13,7 @@ func main() {
 
 	router := http.NewServeMux()
 
-	router.HandleFunc("/v1/urlinfo/{url}", Server)
+	router.HandleFunc("/v1/urlinfo/", Server)
 	log.Fatal(http.ListenAndServe(":8080", router))
 
 }
