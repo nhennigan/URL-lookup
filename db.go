@@ -22,14 +22,14 @@ func getEnvVars() {
 	}
 }
 
-func createDb() int64 {
+func createDb() (int64, error) {
 	//source env vars
 	getEnvVars()
 
 	//create db connection
 	db, err := sql.Open("mysql", dsn(""))
 	if err != nil {
-		log.Fatal(err)
+		return 0, err
 	}
 
 	defer db.Close()
@@ -46,20 +46,20 @@ func createDb() int64 {
 	//create database
 	res, err := db.ExecContext(context, "CREATE DATABASE IF NOT EXISTS "+"url")
 	if err != nil {
-		log.Printf("Error occurred when creating DB\n %s", err)
+		log.Printf("Error occurred when creating DB\n %s. Have you set the correct credentials for the DB", err)
+		return 0, err
 	}
 
-	//return result of database creation
 	no_rows, err := res.RowsAffected()
 	if err != nil {
 		log.Fatal(err)
 	}
-	return no_rows
+	return no_rows, nil
 
 }
 
 // initialize datbase and load preliminary data
-func initializeDb() {
+func initializeDb() error {
 	db := openDb()
 	defer db.Close()
 
@@ -70,12 +70,15 @@ func initializeDb() {
 	_, err := db.ExecContext(context, "CREATE TABLE IF NOT EXISTS MalwareCheck(url varchar(255) NOT NULL, malware varchar(255) NOT NULL, PRIMARY KEY (url));")
 	if err != nil {
 		log.Printf("Error occurred when creating table\n %s", err)
+		return err
 	}
 
-	_, err = db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('abc.com','yes'),('def.com','no'),('ghi.com','no'),('jkl.com','yes');")
+	_, err = db.ExecContext(context, "INSERT INTO MalwareCheck(url,malware) VALUES ('abc.com','yes'),('def.com','no'),('ghi.com','no'),('jkl.com','yes') ;")
 	if err != nil {
 		log.Printf("Error occurred when populating DB\n %s", err)
 	}
+
+	return nil
 }
 
 func openDb() *sql.DB {
@@ -100,11 +103,12 @@ func malwareCheck(url string) (string, error) {
 	context, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelfunc()
 
-	//quesy db
+	//query db
 	var mal string
 	row, err := db.QueryContext(context, "select malware from MalwareCheck where url='"+url+"';")
 	if err != nil {
 		log.Fatal(err)
+		return "", err
 	}
 
 	//format response
@@ -113,6 +117,7 @@ func malwareCheck(url string) (string, error) {
 	}
 	if err != nil {
 		log.Fatal(err)
+		return "", err
 	}
 	return mal, nil
 
@@ -132,10 +137,11 @@ type inputData struct {
 }
 
 // read from entries.json and create slice of struct inputData
-func readNewData() []inputData {
+func readNewData() ([]inputData, error) {
 	file, err := os.ReadFile("entries.json")
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
 
 	var data []inputData
@@ -143,8 +149,9 @@ func readNewData() []inputData {
 
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
-	return data
+	return data, nil
 }
 
 // add new entry(s) to the database based on read in data

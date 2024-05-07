@@ -3,12 +3,16 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	createDb()
+	_, err := createDb()
+	if err != nil {
+		os.Exit(1)
+	}
 	initializeDb()
 
 	router := http.NewServeMux()

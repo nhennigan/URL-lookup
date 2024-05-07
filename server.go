@@ -49,7 +49,7 @@ func Server(w http.ResponseWriter, r *http.Request) {
 			//check database for malware
 			res, err := malwareCheck(url)
 			if err != nil {
-				fmt.Fprintf(w, "There is some issue with the database")
+				fmt.Fprintf(w, "There is some issue with the database - %s", err)
 			}
 
 			var urlResp URL
@@ -80,8 +80,11 @@ func Server(w http.ResponseWriter, r *http.Request) {
 			case <-done:
 				return
 			case <-ticker.C:
-				entries := readNewData()
-				addNewEntry(entries)
+				entries, err := readNewData()
+				if err == nil {
+					addNewEntry(entries)
+				}
+
 			}
 		}
 	}()

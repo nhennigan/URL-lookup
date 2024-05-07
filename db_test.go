@@ -8,10 +8,10 @@ import (
 
 func TestInit(t *testing.T) {
 	t.Run("checks db is created", func(t *testing.T) {
-		got := createDb()
+		got, err := createDb()
 		want := int64(1)
 
-		if got != want {
+		if got != want || err != nil {
 			t.Errorf("return is incorrect - got %q , want %q", got, want)
 		}
 
@@ -70,7 +70,7 @@ func TestSetMalwareState(t *testing.T) {
 
 func TestReadNewData(t *testing.T) {
 	t.Run("checks entries read in correctly", func(t *testing.T) {
-		got := readNewData()
+		got, err := readNewData()
 		want := []inputData{
 			{"qrs.com", "no"},
 			{"tuv.com", "no"},
@@ -78,7 +78,7 @@ func TestReadNewData(t *testing.T) {
 			{"123.com", "no"}}
 
 		for i, _ := range got {
-			if got[i] != want[i] {
+			if got[i] != want[i] || err != nil {
 				t.Errorf("return is incorrect - got %q , want %q", got, want)
 			}
 		}
