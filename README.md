@@ -14,7 +14,7 @@ Coding assignment for interview. Implement a URL lookup that will block if malwa
 ## System Requirements
 
 * golang insalled
-* SQL server running locally
+* mySQL server running locally that you have the credentials to access
 * I am using on a Windows dev env - this code should be compatible across platforms but the execution of the server file may be different depeding on your operating system
 
 ## Project Design
