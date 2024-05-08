@@ -13,8 +13,10 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	initializeDb()
-
+	err = initializeDb()
+	if err != nil {
+		os.Exit(1)
+	}
 	router := http.NewServeMux()
 
 	router.HandleFunc("/v1/urlinfo/", Server)
